@@ -1,9 +1,7 @@
-import requests
-import json
+import sys
 from langchain_ollama import OllamaLLM
 from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
-import sys
 
 SYSTEM_PROMPT = """
 You are a Senior QA Engineer with 10+ years of experience.
@@ -43,9 +41,6 @@ Output format guidelines:
 
 """
 
-# Ollama API endpoint
-OLLAMA_API_URL = "http://localhost:11434/api/generate"
-
 # RAG Configuration
 CHROMA_PATH = "./chroma_db"
 EMBEDDING_MODEL = "nomic-embed-text"
@@ -75,22 +70,9 @@ def get_context(query: str):
         print(f"[WARN] Retrieval failed: {e}")
         return ""
 
-def ask_qa(prompt: str):
-    # This function is not used in the main loop but kept for compatibility
-    context = get_context(prompt)
-    full_prompt = f"CONTEXT FROM SOP:\n{context}\n\nUser: {prompt}"
-    response = llm.invoke(full_prompt)
-
-    # DEBUG GUARD
-    if response is None or response.strip() == "":
-        return "[ERROR] Model returned empty response"
-
-    return response
-
-
 def ask_qa_streaming(prompt: str):
     """
-    Stream token response real-time dari Ollama tanpa LangChain
+    Stream token response using LangChain's built-in streaming capabilities.
     """
     
     print("🔍 Retrieving context...")
@@ -100,45 +82,21 @@ def ask_qa_streaming(prompt: str):
     else:
         print("⚠️ No relevant context found in SOP (or retrieval failed).\n")
 
-    full_prompt = f"{SYSTEM_PROMPT}\n\nCONTEXT FROM SOP:\n{context}\n\nUser: {prompt}"
-    
-    payload = {
-        "model": "qwen2.5:3b-instruct",
-        "prompt": full_prompt,
-        "stream": True,
-        "temperature": 0.2,
-        "num_ctx": 4096,
-    }
+    full_prompt = f"CONTEXT FROM SOP:\n{context}\n\nUser: {prompt}"
     
     try:
-        response = requests.post(OLLAMA_API_URL, json=payload, stream=True, timeout=300)
-        response.raise_for_status()
-        
+        print("[QA OUTPUT]\n")
         full_response = ""
-        for line in response.iter_lines():
-            if line:
-                data = json.loads(line)
-                token = data.get("response", "")
-                if token:
-                    print(token, end="", flush=True)
-                    full_response += token
-                
-                # Stop jika done = true
-                if data.get("done", False):
-                    break
-        
-        print()  # New line setelah streaming selesai
+        for chunk in llm.stream(full_prompt):
+            print(chunk, end="", flush=True)
+            full_response += chunk
+        print("\n") # New line after streaming
         return full_response
         
-    except requests.exceptions.ConnectionError:
-        error_msg = "[ERROR] Tidak dapat terhubung ke Ollama API di localhost:11434. Pastikan Ollama sudah berjalan."
-        print(error_msg)
-        return error_msg
     except Exception as e:
-        error_msg = f"[ERROR] {str(e)}"
+        error_msg = f"\n[ERROR] Generation failed: {str(e)}"
         print(error_msg)
         return error_msg
-
 
 if __name__ == "__main__":
     print("🧠 QA AI Assistant Ready (with RAG for SOP) (type 'exit' to quit)")
@@ -150,8 +108,9 @@ if __name__ == "__main__":
             if q.lower() in ["exit", "quit"]:
                 break
             
-            print("\n[QA OUTPUT]\n")
-            print(ask_qa(q))
+            # Use the streaming function strictly
+            ask_qa_streaming(q)
+            
         except KeyboardInterrupt:
             print("\nExiting...")
             break
