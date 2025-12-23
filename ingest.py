@@ -1,7 +1,7 @@
 import os
 import glob
 from langchain_community.document_loaders import UnstructuredMarkdownLoader
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from rag.llm_config import get_embeddings, get_chroma_db_path
 from rag.logger import setup_logger

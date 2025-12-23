@@ -1,5 +1,5 @@
 from typing import Optional
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from rag.llm_config import get_llm, get_embeddings, get_chroma_db_path
 from rag.prompts import SYSTEM_PROMPT
 from rag.logger import setup_logger

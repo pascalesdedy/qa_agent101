@@ -9,3 +9,4 @@ markdown
 ollama
 python-dotenv
 langchain-google-genai
+langchain-chroma
