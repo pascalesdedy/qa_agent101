@@ -16,6 +16,27 @@ This project implements an AI-powered Quality Assurance (QA) agent utilizing Ret
 - `rag/`: Contains auxiliary RAG documentation and templates.
 - `chroma_db/`: Stores the vector embeddings.
 
+## Configuration
+
+The agent can be configured to connect to a local or remote Ollama instance.
+
+1.  **Environment Setup**:
+    Copy the example environment file:
+    ```bash
+    cp .env.example .env
+    ```
+
+2.  **Remote LLM (Optional)**:
+    If your Ollama instance is running on a different machine, update `OLLAMA_BASE_URL` in `.env`:
+    ```ini
+    OLLAMA_BASE_URL=http://<REMOTE_IP>:11434
+    ```
+
+3.  **Google Gemini (Optional)**:
+    To use Google Gemini instead of Ollama:
+    - Set `LLM_PROVIDER=gemini` in `.env`.
+    - Add your API key: `GOOGLE_API_KEY=your_api_key`.
+
 ## Getting Started
 
 1.  **Ingest Data**:

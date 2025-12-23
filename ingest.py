@@ -2,52 +2,53 @@ import os
 import glob
 from langchain_community.document_loaders import UnstructuredMarkdownLoader
 from langchain_community.vectorstores import Chroma
-from langchain_ollama import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from rag.llm_config import get_embeddings, get_chroma_db_path
+from rag.logger import setup_logger
+
+logger = setup_logger("ingest")
 
 # Configuration
-DATA_DIR = "./rag/docs/" # Changed to directory
-CHROMA_PATH = "./chroma_db"
-EMBEDDING_MODEL = "nomic-embed-text" 
+DATA_DIR = "./rag/docs/"  
 
-def ingest_data():
+def ingest_data() -> None:
     if not os.path.exists(DATA_DIR):
-        print(f"[ERROR] Directory {DATA_DIR} not found.")
+        logger.error(f"Directory {DATA_DIR} not found.")
         return
 
-    print(f"📂 Scanning directory: {DATA_DIR}")
+    logger.info(f"Scanning directory: {DATA_DIR}")
     files = glob.glob(os.path.join(DATA_DIR, "*.md"))
     
     if not files:
-        print("⚠️ No markdown files found.")
+        logger.warning(f"No markdown files found.")
         return
 
     all_chunks = []
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
 
     for file_path in files:
-        print(f"📄 Loading {file_path}...")
+        logger.info(f"Loading {file_path}...")
         loader = UnstructuredMarkdownLoader(file_path)
         data = loader.load()
         chunks = text_splitter.split_documents(data)
         all_chunks.extend(chunks)
-        print(f"   - {len(chunks)} chunks.")
+        logger.info(f"   - {len(chunks)} chunks.")
 
     if not all_chunks:
-        print("⚠️ No content to ingest.")
+        logger.warning("No content to ingest.")
         return
 
-    print(f"📦 Creating embeddings for {len(all_chunks)} total chunks with {EMBEDDING_MODEL}...")
-    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
+    logger.info(f"Creating embeddings for {len(all_chunks)} total chunks...")
+    embeddings = get_embeddings()
 
-    print("💾 Saving to ChromaDB...")
+    logger.info("Saving to ChromaDB...")
     # Persist the DB
     db = Chroma.from_documents(
         documents=all_chunks, 
         embedding=embeddings, 
-        persist_directory=CHROMA_PATH
+        persist_directory=get_chroma_db_path()
     )
-    print(f"✅ Ingestion complete! Data saved to {CHROMA_PATH}")
+    logger.info(f"Ingestion complete! Data saved to {get_chroma_db_path()}")
 
 if __name__ == "__main__":
     ingest_data()

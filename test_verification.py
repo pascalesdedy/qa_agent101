@@ -1,7 +1,7 @@
 from qa_brain import ask_qa_streaming
 
 print("Testing QA Brain...")
-response = ask_qa_streaming("Create a test case for User Login")
+response = ask_qa_streaming("Create one test case for User Login")
 if response and "Test Case" in response:
     print("\n✅ Verification SUCCESS: Model generated a test case.")
 else:

@@ -1,0 +1,11 @@
+langchain-community
+langchain-ollama
+langchain-text-splitters
+chromadb
+unstructured
+python-magic
+pytest
+markdown
+ollama
+python-dotenv
+langchain-google-genai
